@@ -1,4 +1,5 @@
 const express = require('express');
+const { connectDB } = require('./config/db');
 const cors = require('cors');
 const helmet = require('helmet');
 const { sanitize } = require('./utils/validate');
@@ -16,7 +17,14 @@ function createApp() {
     req.body = sanitize(req.body);
     next();
   });
-
+app.use(async (_req, _res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    next(err);
+  }
+});
   app.get('/api/health', (_req, res) => res.json({ success: true, data: { status: 'ok' } }));
   app.use('/api/auth', require('./routes/authRoutes'));
   app.use('/api/users', require('./routes/userRoutes'));
@@ -38,4 +46,7 @@ function createApp() {
   return app;
 }
 
-module.exports = { createApp };
+const app = createApp();
+
+module.exports = app;
+module.exports.createApp = createApp;
